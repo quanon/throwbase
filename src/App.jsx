@@ -88,7 +88,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <Header />
+      <Header status={status} />
 
       <main className="container mx-auto p-4 grid gap-4 lg:grid-cols-[320px_1fr] items-start">
         <FilterPanel
