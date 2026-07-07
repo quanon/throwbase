@@ -11,8 +11,8 @@ export const PAGE_SIZE = 30;
 // Slider-range modes. "all" derives the bounds from the actual data extent;
 // preset modes clamp the sliders to a fixed, commonly used range.
 export const RANGE_MODES = [
-  { value: "all", label: "全データの範囲" },
-  { value: "1a", label: "一般的な 1A の範囲" },
+  { value: "all", label: "全データ" },
+  { value: "1a", label: "1A" },
 ];
 
 // Ranges typical for 1A yo-yos, used as the slider min/max in "1a" mode.
