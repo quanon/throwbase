@@ -2,6 +2,8 @@
 
 A static web app that searches yo-yo data from `yoyo.db` (SQLite).
 
+<https://throwbase.vercel.app/>
+
 ## File Structure
 
 - `src/`: Application source (React components + DuckDB-Wasm hooks)
