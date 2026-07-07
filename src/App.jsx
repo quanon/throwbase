@@ -46,6 +46,7 @@ export default function App() {
   // indexes into filters[key] whenever ready is true.
   const ready = status.phase === "ready" && filters !== null;
   const [sortKey, setSortKey] = useState("name");
+  const [sortDir, setSortDir] = useState("asc");
   const [rows, setRows] = useState([]);
   const [matchTotal, setMatchTotal] = useState(0);
   const [error, setError] = useState(null);
@@ -70,6 +71,7 @@ export default function App() {
         const { rows: newRows, total: newTotal } = await search({
           filters,
           sortKey,
+          sortDir,
           offset: offsetRef.current,
         });
         if (seq !== querySeq.current) return; // a newer search superseded this one
@@ -80,7 +82,7 @@ export default function App() {
         setError(String(e));
       }
     },
-    [filters, sortKey, search]
+    [filters, sortKey, sortDir, search]
   );
 
   // Debounce slider-driven searches; the very first search (right after
@@ -90,7 +92,7 @@ export default function App() {
     const timer = setTimeout(() => runSearch(false), 120);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sortKey]);
+  }, [filters, sortKey, sortDir]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -130,20 +132,32 @@ export default function App() {
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-lg font-bold px-1">検索結果</h2>
-            <label className="select select-sm w-48">
-              <span className="label">並び順</span>
-              <select
+            <div className="flex items-center gap-2">
+              <label className="select select-sm w-40">
+                <span className="label">並び順</span>
+                <select
+                  disabled={!ready}
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value)}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
                 disabled={!ready}
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value)}
+                aria-label={sortDir === "asc" ? "昇順" : "降順"}
+                title={sortDir === "asc" ? "昇順" : "降順"}
+                onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
               >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                {sortDir === "asc" ? "昇順 ↑" : "降順 ↓"}
+              </button>
+            </div>
           </div>
 
           {(error || status.phase === "error") && (

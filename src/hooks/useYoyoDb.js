@@ -94,11 +94,12 @@ export function useYoyoDb() {
   // wait for "ready" before grabbing this function.
   const search = useMemo(
     () =>
-      async ({ filters, sortKey, offset }) => {
+      async ({ filters, sortKey, sortDir, offset }) => {
         const conn = connRef.current;
         if (!conn) return { rows: [], total: 0 };
         const where = KEYS.map((k) => `${k} BETWEEN ${filters[k].lo} AND ${filters[k].hi}`).join(" AND ");
-        const order = sortKey === "name" ? "name, id" : `${sortKey}, name, id`;
+        const dir = sortDir === "desc" ? "DESC" : "ASC";
+        const order = sortKey === "name" ? `name ${dir}, id` : `${sortKey} ${dir}, name, id`;
         const [countResult, rowsResult] = await Promise.all([
           conn.query(`SELECT count(*)::INT AS n FROM yoyos WHERE ${where}`),
           conn.query(`
