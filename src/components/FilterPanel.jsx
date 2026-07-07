@@ -1,4 +1,5 @@
 import DualRangeSlider from "./DualRangeSlider.jsx";
+import { RANGE_MODES } from "../hooks/useYoyoDb.js";
 
 const FIELDS = [
   { key: "diameter", label: "直径 (mm)" },
@@ -8,7 +9,22 @@ const FIELDS = [
 
 const EMPTY_DOMAIN = { min: 0, max: 0 };
 
-export default function FilterPanel({ ready, filters, sliderBounds, rawBounds, onChange, onReset, hitCount, total }) {
+export default function FilterPanel({
+  ready,
+  filters,
+  sliderBounds,
+  rawBounds,
+  rangeMode,
+  onModeChange,
+  onChange,
+  onReset,
+  hitCount,
+  total,
+}) {
+  // In preset modes the sliders are clamped, so the end labels should show the
+  // clamped extent (= sliderBounds) rather than the raw data min/max.
+  const labelBounds = rangeMode === "all" ? rawBounds : sliderBounds;
+
   return (
     <aside className="card bg-base-100 shadow-md lg:sticky lg:top-20">
       <div className="card-body gap-6">
@@ -19,12 +35,25 @@ export default function FilterPanel({ ready, filters, sliderBounds, rawBounds, o
           </button>
         </div>
 
+        <div className="join w-full">
+          {RANGE_MODES.map(({ value, label }) => (
+            <button
+              key={value}
+              className={`btn btn-sm join-item flex-1 ${rangeMode === value ? "btn-primary" : "btn-ghost"}`}
+              disabled={!ready}
+              onClick={() => onModeChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {FIELDS.map(({ key, label }) => (
           <DualRangeSlider
             key={key}
             label={label}
             domain={ready ? sliderBounds[key] : EMPTY_DOMAIN}
-            rawBounds={ready ? rawBounds[key] : null}
+            rawBounds={ready ? labelBounds[key] : null}
             value={ready ? filters[key] : { lo: 0, hi: 0 }}
             disabled={!ready}
             onChange={(v) => onChange(key, v)}

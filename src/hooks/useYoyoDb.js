@@ -8,6 +8,22 @@ export const KEYS = ["diameter", "width", "weight"];
 export const STEP = 0.5;
 export const PAGE_SIZE = 30;
 
+// Slider-range modes. "all" derives the bounds from the actual data extent;
+// preset modes clamp the sliders to a fixed, commonly used range.
+export const RANGE_MODES = [
+  { value: "all", label: "全データの範囲" },
+  { value: "1a", label: "一般的な 1A の範囲" },
+];
+
+// Ranges typical for 1A yo-yos, used as the slider min/max in "1a" mode.
+export const RANGE_PRESETS = {
+  "1a": {
+    diameter: { min: 40, max: 60 },
+    width: { min: 30, max: 70 },
+    weight: { min: 50, max: 80 },
+  },
+};
+
 export const snapMin = (v) => Math.floor(v / STEP) * STEP;
 export const snapMax = (v) => Math.ceil(v / STEP) * STEP;
 

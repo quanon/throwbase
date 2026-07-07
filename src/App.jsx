@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "./components/Header.jsx";
 import FilterPanel from "./components/FilterPanel.jsx";
 import ResultsGrid from "./components/ResultsGrid.jsx";
-import { KEYS, snapMin, snapMax, useYoyoDb } from "./hooks/useYoyoDb.js";
+import { KEYS, RANGE_PRESETS, snapMin, snapMax, useYoyoDb } from "./hooks/useYoyoDb.js";
 
 const SORT_OPTIONS = [
   { value: "name", label: "名前" },
@@ -14,18 +14,31 @@ const SORT_OPTIONS = [
 export default function App() {
   const { status, bounds, total, search } = useYoyoDb();
 
-  const sliderBounds = useMemo(() => {
-    if (!bounds) return null;
-    const out = {};
-    for (const k of KEYS) out[k] = { min: snapMin(bounds[k].min), max: snapMax(bounds[k].max) };
-    return out;
-  }, [bounds]);
+  const [rangeMode, setRangeMode] = useState("all");
 
-  const fullRangeFilters = useCallback(() => {
+  // Compute the slider min/max for a given mode: "all" uses the data extent,
+  // preset modes use a fixed range clamped to sensible steps.
+  const computeSliderBounds = useCallback(
+    (mode) => {
+      if (!bounds) return null;
+      const src = mode === "all" ? bounds : RANGE_PRESETS[mode];
+      const out = {};
+      for (const k of KEYS) out[k] = { min: snapMin(src[k].min), max: snapMax(src[k].max) };
+      return out;
+    },
+    [bounds]
+  );
+
+  const sliderBounds = useMemo(
+    () => computeSliderBounds(rangeMode),
+    [computeSliderBounds, rangeMode]
+  );
+
+  const fullRangeFilters = (sb) => {
     const out = {};
-    for (const k of KEYS) out[k] = { lo: sliderBounds[k].min, hi: sliderBounds[k].max };
+    for (const k of KEYS) out[k] = { lo: sb[k].min, hi: sb[k].max };
     return out;
-  }, [sliderBounds]);
+  };
 
   const [filters, setFilters] = useState(null);
   // Wait for filters to be seeded too: status flips to "ready" a render
@@ -40,9 +53,10 @@ export default function App() {
   // Seed filters to the full range as soon as the DB reports its bounds.
   useEffect(() => {
     if (sliderBounds && !filters) {
-      setFilters(fullRangeFilters());
+      setFilters(fullRangeFilters(sliderBounds));
     }
-  }, [sliderBounds, filters, fullRangeFilters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sliderBounds, filters]);
 
   const querySeq = useRef(0);
   const offsetRef = useRef(0);
@@ -83,7 +97,16 @@ export default function App() {
   };
 
   const handleReset = () => {
-    setFilters(fullRangeFilters());
+    setFilters(fullRangeFilters(sliderBounds));
+  };
+
+  // Switching the range mode also resets the filters to the new range's
+  // full extent (the previous selection may fall outside the new bounds).
+  const handleModeChange = (mode) => {
+    if (mode === rangeMode) return;
+    setRangeMode(mode);
+    const sb = computeSliderBounds(mode);
+    if (sb) setFilters(fullRangeFilters(sb));
   };
 
   return (
@@ -96,6 +119,8 @@ export default function App() {
           filters={filters}
           sliderBounds={sliderBounds}
           rawBounds={bounds}
+          rangeMode={rangeMode}
+          onModeChange={handleModeChange}
           onChange={handleFilterChange}
           onReset={handleReset}
           hitCount={matchTotal}
